@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "sort.h"
 
 int main() {
     FILE *fp;
@@ -22,7 +23,7 @@ int main() {
     }
 
     // sort phase
-    
+    separationSort(fp);    
 
     // merge phase
 }
