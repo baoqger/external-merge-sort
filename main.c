@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "sort.h"
+#include "external_sort.h"
 
 int main() {
     FILE *fp;

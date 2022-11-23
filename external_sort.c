@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "sort.h"
+#include "external_sort.h"
+#include "internal_sort.h"
 
 /*
  * Goes through a given file and separates that file into sorted 1MB files using (internal) mergeSort algorithm
@@ -15,14 +16,11 @@ void separationSort(FILE *input) {
         if (count < MEMORY_LIMIT/RECORD_SIZE) {
             buffer[count++] = (unsigned int)strtoul(line, NULL, 10); 
         } else {
+            mergeSort(buffer, count); // sort records
             count = 0;
             return;
         }
     }
 }
-
-/*
- * Sort the records in the memory buffer with mergeSort algorithm 
- * */
 
 
