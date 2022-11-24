@@ -63,6 +63,7 @@ void separationSort(FILE *input) {
     outputToFile(buffer, count, fp);
     
     free(buffer);
+    free(line);
     fileNum++;
     printf("Sort phase done. %d tmp sorted files are produced.\n", fileNum - 1);
 }
