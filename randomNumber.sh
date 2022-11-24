@@ -4,4 +4,4 @@
 # Generate one million seven digits random integers
 # based on shuf utility
 
-shuf -i 1000000-9999999 -n 10000000 > ./input.txt
+shuf -i 1000000-9999999 -n 1000000 > ./input.txt

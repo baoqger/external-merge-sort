@@ -29,6 +29,9 @@ $(EXSORT): $(OBJ)
 
 clean:
 	$(RM) ./$(OBJ) ./$(EXSORT)
+cleantmp:
+	$(RM) -r ./tmp
+	$(RM) ./input.txt
 
 
 
