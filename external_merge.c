@@ -13,11 +13,10 @@ extern int fileNum;
  * The exMergeSort will process the files until all the sorted tmp files are merged into a single file. 
  * */
 void exMergeSort() {
-    int i; 
-    int inputFileNum = 1; 
+    int inputFileNum; 
     printf("Merge phase starts.\n");
 
-    for (i = 0; i < fileNum - 1; i += MULTI_WAY_NUMBER) {
+    for (inputFileNum = 1; inputFileNum < fileNum - 1;) {
         
         // open new file to merge into
         FILE *fm; 
