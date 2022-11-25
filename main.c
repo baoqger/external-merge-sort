@@ -38,7 +38,7 @@ int main() {
     fclose(fp);
     
     // merge phase
-    exMergeSort();
+    exMerge();
 
     printf("Success\n");
     return 0;

@@ -2,26 +2,50 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "external_merge.h"
 #include "constant.h"
 
 extern int fileNum;
+
+void exMerge() {
+    int pass = 1;
+    while (fileNum > 1) {
+        exMergeSort(pass, fileNum);
+        int remainer = fileNum % 2;
+        fileNum = fileNum / 2;
+        if (remainer > 0) {
+            fileNum++;
+        } 
+        pass++;
+    }
+}
+
 
 /*
  * External merge sort takes the files array and merge two(or multiple) sorted files into a new file. This
  * is called a run. 
  * The exMergeSort will process the files until all the sorted tmp files are merged into a single file. 
  * */
-void exMergeSort() {
-    int inputFileNum; 
-    printf("Merge phase starts.\n");
-
-    for (inputFileNum = 1; inputFileNum < fileNum - 1;) {
+void exMergeSort(int pass, int nums) {
+    int inputFileNum = 0; 
+    int run = 1;
+    for (; inputFileNum < nums - 1;) {
         
         // open new file to merge into
+        if (inputFileNum == 0) { // create the dir for current pass
+            int status;
+            char dirName[20];
+            sprintf(dirName, "./tmp/pass%d", pass);
+            if ((status = mkdir(dirName, S_IRWXU | S_IRWXU | S_IROTH | S_IXOTH)) == -1) {
+                fprintf(stderr, "Failed to create tmp directory %s.\n", dirName);
+                exit(EXIT_FAILURE);
+            }
+        }
         FILE *fm; 
         char mergedFileName[20];
-        sprintf(mergedFileName, "./tmp/%d.txt", fileNum);
+        sprintf(mergedFileName, "./tmp/pass%d/%d.txt", pass, run);
         if ((fm = fopen(mergedFileName, "w+")) == NULL) {
             fprintf(stderr, "%s\n", strerror(errno));
             fprintf(stderr, "merged file %s: can't create or open.\n", mergedFileName);
@@ -30,21 +54,21 @@ void exMergeSort() {
         // Rewind first and second files that will be merged
         FILE *fi1;
         char inputFileName1[20];
-        sprintf(inputFileName1, "./tmp/%d.txt", inputFileNum);
+        inputFileNum++;
+        sprintf(inputFileName1, "./tmp/pass%d/%d.txt", pass - 1, inputFileNum);
         if ((fi1 = fopen(inputFileName1, "r")) == NULL) {
             fprintf(stderr, "%s\n", strerror(errno));
             fprintf(stderr, "merged file %s: can't create or open.\n", inputFileName1);
         }
-        inputFileNum++;
         
         FILE *fi2;
         char inputFileName2[20];
-        sprintf(inputFileName2, "./tmp/%d.txt", inputFileNum);
+        inputFileNum++;
+        sprintf(inputFileName2, "./tmp/pass%d/%d.txt", pass - 1, inputFileNum);
         if ((fi2 = fopen(inputFileName2, "r")) == NULL) {
             fprintf(stderr, "%s\n", strerror(errno));
             fprintf(stderr, "merged file %s: can't create or open.\n", inputFileName2);
         }
-        inputFileNum++;
         rewind(fi1);
         rewind(fi2);
 
@@ -80,10 +104,14 @@ void exMergeSort() {
 
         fclose(fm); fclose(fi1); fclose(fi2);
 
-        fileNum++;
+        run++;
     }
-
-    printf("Merge phase finish.\n");
+    // handle the remaining file
+    if (inputFileNum < nums) {
+        char syscom[50];
+        sprintf(syscom, "cp ./tmp/pass%d/%d.txt ./tmp/pass%d/%d.txt", pass - 1, nums, pass, run);
+        system(syscom);
+    }
 }
 
 /*

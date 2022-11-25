@@ -27,15 +27,23 @@ void separationSort(FILE *input) {
             // output sorted to file
             if (fileNum == 1) { // create the dir
                 int status;
+                // create tmp directory
                 if ((status = mkdir("./tmp", S_IRWXU | S_IRWXU | S_IROTH | S_IXOTH)) == -1) {
                     fprintf(stderr, "Failed to create tmp directory.\n");
                     exit(EXIT_FAILURE);
                 }
                 printf("Created tmp directory.\n");
+                // create pass0 directory for sort phase
+                if ((status = mkdir("./tmp/pass0", S_IRWXU | S_IRWXU | S_IROTH | S_IXOTH)) == -1) {
+                    fprintf(stderr, "Failed to create pass0 directory.\n");
+                    exit(EXIT_FAILURE);
+                }
+                printf("Created pass0 directory.\n");
+ 
             }
 
             char fileName[20];
-            sprintf(fileName, "./tmp/%d.txt", fileNum);
+            sprintf(fileName, "./tmp/pass0/%d.txt", fileNum);
             if ((fp = fopen(fileName, "w+")) == NULL) {
                 fprintf(stderr, "Failed to create file: %s.\n", fileName);
                 exit(EXIT_FAILURE);
@@ -55,7 +63,7 @@ void separationSort(FILE *input) {
     // sort the last and final file
     mergeSort(buffer, count);
     char fileName[20];
-    sprintf(fileName, "./tmp/%d.txt", fileNum);
+    sprintf(fileName, "./tmp/pass0/%d.txt", fileNum);
     if ((fp = fopen(fileName, "w+")) == NULL) {
         fprintf(stderr, "Failed to create file: %s.\n", fileName);
         exit(EXIT_FAILURE);
@@ -64,7 +72,6 @@ void separationSort(FILE *input) {
     
     free(buffer);
     free(line);
-    fileNum++;
     printf("Sort phase done. %d tmp sorted files are produced.\n", fileNum - 1);
 }
 

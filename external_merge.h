@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
-void exMergeSort();
+void exMerge();
+void exMergeSort(int, int);
 char* getRecord(FILE*);
 #endif 
