@@ -72,7 +72,7 @@ void separationSort(FILE *input) {
     
     free(buffer);
     free(line);
-    printf("Sort phase done. %d tmp sorted files are produced.\n", fileNum - 1);
+    printf("Sort phase done. %d tmp sorted files are produced.\n", fileNum);
 }
 
 
