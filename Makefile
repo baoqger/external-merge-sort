@@ -31,6 +31,7 @@ clean:
 	$(RM) ./$(OBJ) ./$(EXSORT)
 cleantmp:
 	$(RM) -r ./tmp
+cleaninput:	
 	$(RM) ./input.txt
 
 
