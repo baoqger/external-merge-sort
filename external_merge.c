@@ -10,6 +10,7 @@
 extern int fileNum;
 
 void exMerge() {
+    printf("Merge phase start.\n");
     int pass = 1;
     while (fileNum > 1) {
         exMergeSort(pass, fileNum);
@@ -20,6 +21,14 @@ void exMerge() {
         } 
         pass++;
     }
+
+    // generate the outpute file
+    if (fileNum == 1) {
+        char syscom[50];
+        sprintf(syscom, "cp ./tmp/pass%d/1.txt ./output.txt", pass - 1);
+        system(syscom);
+    }
+    printf("Merge phase done.\n");
 }
 
 

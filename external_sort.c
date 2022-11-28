@@ -18,6 +18,7 @@ void separationSort(FILE *input) {
     size_t len = 0;
     ssize_t nread;
     int count = 0;
+    printf("Sort phase start.\n");
     while((nread = getline(&line, &len, input)) != -1) {
         if (count < MEMORY_LIMIT/RECORD_SIZE) {
             buffer[count++] = (unsigned int)strtoul(line, NULL, 10); 
@@ -32,13 +33,11 @@ void separationSort(FILE *input) {
                     fprintf(stderr, "Failed to create tmp directory.\n");
                     exit(EXIT_FAILURE);
                 }
-                printf("Created tmp directory.\n");
                 // create pass0 directory for sort phase
                 if ((status = mkdir("./tmp/pass0", S_IRWXU | S_IRWXU | S_IROTH | S_IXOTH)) == -1) {
                     fprintf(stderr, "Failed to create pass0 directory.\n");
                     exit(EXIT_FAILURE);
                 }
-                printf("Created pass0 directory.\n");
  
             }
 
