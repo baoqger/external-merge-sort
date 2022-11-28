@@ -20,10 +20,34 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "external_sort.h"
 #include "external_merge.h"
 
-int main() {
+int ways = 2;
+int debug_model  = 0;
+
+int main(int argc, char *argv[]) {
+    char argch;    // to manage command line arguments
+    while((argch = getopt(argc, argv, "hdw:")) != EOF) {
+        switch(argch) {
+            case 'h':
+                printf("Usage: exsort [-w XXX -d]\n");
+                printf("-w XXX: the number of ways to merge the file. Default is 2.\n");
+                printf("-d: enable debug mode. The temporary files generated during the computing will be kept in debug mode.\n");
+                return 0;
+            case 'w':
+                ways = atoi(optarg);
+                break;
+            case 'd':
+                debug_model = 1;
+                break;
+            default:
+                break;
+        }
+    } 
+    
+
     FILE *fp;
     char filename[100];
 

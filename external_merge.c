@@ -2,20 +2,23 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <math.h>
 #include "external_merge.h"
 #include "constant.h"
 
 extern int fileNum;
+extern int ways;
 
 void exMerge() {
     printf("Merge phase start.\n");
     int pass = 1;
     while (fileNum > 1) {
         exMergeSort(pass, fileNum);
-        int remainer = fileNum % 2;
-        fileNum = fileNum / 2;
+        int remainer = fileNum % ways;
+        fileNum = fileNum / ways;
         if (remainer > 0) {
             fileNum++;
         } 
@@ -40,10 +43,10 @@ void exMerge() {
 void exMergeSort(int pass, int nums) {
     int inputFileNum = 0; 
     int run = 1;
-    for (; inputFileNum < nums - 1;) {
+    for (; inputFileNum < nums;) {
         
-        // open new file to merge into
-        if (inputFileNum == 0) { // create the dir for current pass
+        // create the dir for current pass
+        if (inputFileNum == 0) {
             int status;
             char dirName[20];
             sprintf(dirName, "./tmp/pass%d", pass);
@@ -52,6 +55,7 @@ void exMergeSort(int pass, int nums) {
                 exit(EXIT_FAILURE);
             }
         }
+        // open new file to merge in each run
         FILE *fm; 
         char mergedFileName[20];
         sprintf(mergedFileName, "./tmp/pass%d/%d.txt", pass, run);
@@ -59,69 +63,57 @@ void exMergeSort(int pass, int nums) {
             fprintf(stderr, "%s\n", strerror(errno));
             fprintf(stderr, "merged file %s: can't create or open.\n", mergedFileName);
         }
-
-        // Rewind first and second files that will be merged
-        FILE *fi1;
-        char inputFileName1[20];
-        inputFileNum++;
-        sprintf(inputFileName1, "./tmp/pass%d/%d.txt", pass - 1, inputFileNum);
-        if ((fi1 = fopen(inputFileName1, "r")) == NULL) {
-            fprintf(stderr, "%s\n", strerror(errno));
-            fprintf(stderr, "merged file %s: can't create or open.\n", inputFileName1);
+        
+        // Rewind the sorted files in previous pass, each run merge way_numbers numbers of files
+        // Merge the sorted files with multi ways in N runs. 
+        // In the first N - 1 runs, each run merge ways numbers of files
+        // In the last run, merge the remaining files. 
+        int way_numbers = run * ways <= nums ? ways : nums - inputFileNum;
+        FILE *fiarr[way_numbers];
+        for (int i = 0; i < way_numbers; i++) {
+           char inputFileName[20];
+           inputFileNum++; // start from 0 to nums
+           sprintf(inputFileName, "./tmp/pass%d/%d.txt", pass - 1, inputFileNum);
+           if ((fiarr[i] = fopen(inputFileName, "r")) == NULL) {
+                fprintf(stderr, "%s\n", strerror(errno));
+                fprintf(stderr, "input file %s: can't create or open.\n", inputFileName);
+           }
+           rewind(fiarr[i]);
         }
         
-        FILE *fi2;
-        char inputFileName2[20];
-        inputFileNum++;
-        sprintf(inputFileName2, "./tmp/pass%d/%d.txt", pass - 1, inputFileNum);
-        if ((fi2 = fopen(inputFileName2, "r")) == NULL) {
-            fprintf(stderr, "%s\n", strerror(errno));
-            fprintf(stderr, "merged file %s: can't create or open.\n", inputFileName2);
+
+        // get and compare records until files runs out of records
+        char *records[way_numbers]; 
+        for (int i = 0; i < way_numbers; i++) {
+            records[i] = getRecord(fiarr[i]);
         }
-        rewind(fi1);
-        rewind(fi2);
-
-        // get and compare records until fi1 and fi2 runs out o records
-        char *record1 = getRecord(fi1);
-        char *record2 = getRecord(fi2);
-
-        while(record1 && record2) {
-            if(strtoul(record1, NULL, 10) < strtoul(record2, NULL, 10)) {
-                fprintf(fm, "%s", record1); // Print record1 to new file
-                free(record1);
-                record1 = getRecord(fi1); // Get new record from fi1 file
-            } else {
-                fprintf(fm, "%s", record2); // print record2 to new file
-                free(record2);
-                record2 = getRecord(fi2);
-            }
+        // loop until only one file is not run-out
+        while(validateRecords(records, way_numbers )) {
+            int index = getMinRecordIndex(records, way_numbers);
+            fprintf(fm, "%s", records[index]); // print record to new merged file
+            free(records[index]); // free the memory allocated by getline in getRecord function
+            records[index] = getRecord(fiarr[index]); // Get new record from the file
         }
-
-        // if there are more records in fi1, put the rest into the new file
-        while(record1) {
-            fprintf(fm, "%s", record1);
-            free(record1);
-            record1 = getRecord(fi1);
+       
+        // put the rest record in the last remaining file into new file 
+        int lastIndex = getLastRemainRecordIndex(records, way_numbers);
+        while(records[lastIndex]) {
+            fprintf(fm, "%s", records[lastIndex]);
+            free(records[lastIndex]);
+            records[lastIndex] = getRecord(fiarr[lastIndex]);
         }
-
-        // If there are more records in fi2, put the rest into the new file
-        while(record2) {
-            fprintf(fm, "%s", record2);
-            free(record2);
-            record2 = getRecord(fi2);
+        // close files
+        fclose(fm);
+        for (int i = 0; i < way_numbers; i++) {
+            fclose(fiarr[i]);
         }
-
-        fclose(fm); fclose(fi1); fclose(fi2);
-
         run++;
     }
-    // handle the remaining file
-    if (inputFileNum < nums) {
-        char syscom[50];
-        sprintf(syscom, "cp ./tmp/pass%d/%d.txt ./tmp/pass%d/%d.txt", pass - 1, nums, pass, run);
-        system(syscom);
-    }
+
 }
+
+
+
 
 /*
  * Returns a copy of the record
@@ -134,5 +126,52 @@ char* getRecord(FILE *ifp) {
     while ((nread = getline(&line, &len, ifp)) != -1) {
         return line;       
     }
-    return 0;
+    return NULL;
 }
+
+/*
+ * Validate whether at least two records are non-zero
+ * */
+bool validateRecords(char **records, int size) {
+    int count = 0;
+    for (int i = 0; i < size; i++) {
+        if (records[i] != NULL) {
+            count++;
+        }
+    }
+    return count >= 2;
+}
+
+
+/*
+ * Get the min valid record's index
+ * */
+
+int getMinRecordIndex(char **records, int size) {
+    int index = 0;
+    unsigned int min = (int)INFINITY;
+    for (int i = 0; i < size; i++) {
+        if (records[i] == NULL) { // pass invalid run-out record files
+            continue;
+        } 
+        if (strtoul(records[i], NULL, 10) < min) {
+            min = strtoul(records[i], NULL, 10);
+            index = i;
+        }
+    }
+    return index;
+}
+
+/*
+ * Get the last remainer of the records
+ * */
+int getLastRemainRecordIndex(char **records, int size) {
+    for (int i = 0; i < size; i++) {
+        if (records[i] != NULL) {
+            return i;
+        }
+    }
+}
+
+
+
