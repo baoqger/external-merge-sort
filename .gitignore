@@ -1,4 +1,5 @@
 *.o
-exsort 
+exsort
+tester
 *.txt
 ./tmp/*.txt

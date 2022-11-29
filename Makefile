@@ -26,6 +26,8 @@ $(EXSORT): $(OBJ)
 .c.o:
 	$(CC) -c $< $(CFLAGS)
 
+tester: ./test/tester.c
+	$(CC) -o $@ ./test/tester.c
 
 clean:
 	$(RM) ./$(OBJ) ./$(EXSORT)
